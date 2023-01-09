@@ -419,6 +419,13 @@ func funcLastOverTime(vals []parser.Value, args parser.Expressions, enh *EvalNod
 	})
 }
 
+// === delta_over_time(Matrix parser.ValueTypeMatrix) Vector ===
+func funcDeltaOverTime(vals []parser.Value, args parser.Expressions, enh *EvalNodeHelper) Vector {
+	return aggrOverTime(vals, enh, func(values []Point) float64 {
+		return values[len(values)-1].V - values[0].V
+	})
+}
+
 // === max_over_time(Matrix parser.ValueTypeMatrix) Vector ===
 func funcMaxOverTime(vals []parser.Value, args parser.Expressions, enh *EvalNodeHelper) Vector {
 	return aggrOverTime(vals, enh, func(values []Point) float64 {
@@ -1116,6 +1123,7 @@ var FunctionCalls = map[string]FunctionCall{
 	"last_over_time":     funcLastOverTime,
 	"max_over_time":      funcMaxOverTime,
 	"min_over_time":      funcMinOverTime,
+	"delta_over_time":    funcDeltaOverTime,
 	"minute":             funcMinute,
 	"month":              funcMonth,
 	"pi":                 funcPi,
