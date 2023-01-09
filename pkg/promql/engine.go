@@ -1475,7 +1475,7 @@ func (ev *evaluator) eval(expr parser.Expr) (parser.Value, storage.Warnings) {
 		}
 		mat := make(Matrix, 0, len(selVS.Series)) // Output matrix.
 		offset := durationMilliseconds(selVS.Offset)
-		selRange := durationMilliseconds(sel.Range)
+		selRange := durationMilliseconds(sel.Range - 1)
 		stepRange := selRange
 		if stepRange > ev.interval {
 			stepRange = ev.interval
@@ -1713,7 +1713,7 @@ func (ev *evaluator) eval(expr parser.Expr) (parser.Value, storage.Warnings) {
 
 	case *parser.SubqueryExpr:
 		offsetMillis := durationMilliseconds(e.Offset)
-		rangeMillis := durationMilliseconds(e.Range)
+		rangeMillis := durationMilliseconds(e.Range - 1)
 		newEv := &evaluator{
 			endTimestamp:             ev.endTimestamp - offsetMillis,
 			ctx:                      ev.ctx,
@@ -1892,10 +1892,10 @@ func (ev *evaluator) matrixSelector(node *parser.MatrixSelector) (Matrix, storag
 
 		offset = durationMilliseconds(vs.Offset)
 		maxt   = ev.startTimestamp - offset
-		mint   = maxt - durationMilliseconds(node.Range)
+		mint   = maxt - durationMilliseconds(node.Range-1)
 		matrix = make(Matrix, 0, len(vs.Series))
 
-		it = storage.NewBuffer(durationMilliseconds(node.Range))
+		it = storage.NewBuffer(durationMilliseconds(node.Range - 1))
 	)
 	ws, err := checkAndExpandSeriesSet(ev.ctx, node)
 	if err != nil {
@@ -2128,7 +2128,12 @@ func (ev *evaluator) VectorBinop(op parser.ItemType, lhs, rhs Vector, matching *
 
 		rs, found := rightSigs[sig] // Look for a match in the rhs Vector.
 		if !found {
-			continue
+			rs = Sample{
+				Point: Point{
+					V: 0.0, // make it default 0.0 for absent value. TODO be able to set default value
+				},
+				Metric: ls.Metric, // make it same as lhs
+			}
 		}
 
 		// Account for potentially swapped sidedness.
